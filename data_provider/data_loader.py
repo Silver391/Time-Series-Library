@@ -206,8 +206,9 @@ class Dataset_ETT_minute(Dataset):
 
 class Dataset_Custom(Dataset):
     def __init__(self, args, root_path, flag='train', size=None,
-                 features='S', data_path='ETTh1.csv',
+                 features='S', data_path='ETTh1.csv', test_data_path=None,
                  target='OT', scale=True, timeenc=0, freq='h', seasonal_patterns=None):
+        self.test_data_path = test_data_path
         # size [seq_len, label_len, pred_len]
         self.args = args
         # info
@@ -236,8 +237,10 @@ class Dataset_Custom(Dataset):
 
     def __read_data__(self):
         self.scaler = StandardScaler()
-        df_raw = pd.read_csv(os.path.join(self.root_path,
-                                          self.data_path))
+        if self.set_type == 2 and self.test_data_path is not None:  # 测试模式
+            df_raw = pd.read_csv(os.path.join(self.root_path, self.test_data_path))
+        else:  # 训练和验证模式
+            df_raw = pd.read_csv(os.path.join(self.root_path, self.data_path))
 
         '''
         df_raw.columns: ['date', ...(other features), target feature]
@@ -246,11 +249,17 @@ class Dataset_Custom(Dataset):
         cols.remove(self.target)
         cols.remove('date')
         df_raw = df_raw[['date'] + cols + [self.target]]
-        num_train = int(len(df_raw) * 0.7)
-        num_test = int(len(df_raw) * 0.2)
-        num_vali = len(df_raw) - num_train - num_test
-        border1s = [0, num_train - self.seq_len, len(df_raw) - num_test - self.seq_len]
-        border2s = [num_train, num_train + num_vali, len(df_raw)]
+
+        if self.set_type != 2:  # 非测试模式，调整训练集和验证集比例
+            num_train = int(len(df_raw) * 0.9)
+            num_vali = len(df_raw) - num_train
+            num_test = 0
+            border1s = [0, num_train - self.seq_len, len(df_raw) - num_test - self.seq_len]
+            border2s = [num_train, num_train + num_vali, len(df_raw)]
+        else:  # 测试模式
+            border1s = [0, 0, 0]
+            border2s = [len(df_raw), len(df_raw), len(df_raw)]
+
         border1 = border1s[self.set_type]
         border2 = border2s[self.set_type]
 
@@ -261,7 +270,19 @@ class Dataset_Custom(Dataset):
             df_data = df_raw[[self.target]]
 
         if self.scale:
-            train_data = df_data[border1s[0]:border2s[0]]
+            if self.set_type != 2:  # 非测试模式，使用当前数据计算 scaler
+                train_data = df_data[border1s[0]:border2s[0]]
+            else:  # 测试模式，使用训练数据计算 scaler
+                train_df = pd.read_csv(os.path.join(self.root_path, self.data_path))
+                train_cols = list(train_df.columns)
+                train_cols.remove(self.target)
+                train_cols.remove('date')
+                train_df = train_df[['date'] + train_cols + [self.target]]
+                if self.features == 'M' or self.features == 'MS':
+                    train_data = train_df[train_df.columns[1:]]
+                elif self.features == 'S':
+                    train_data = train_df[[self.target]]
+                train_data = train_data[0:int(len(train_data) * 0.9)]
             self.scaler.fit(train_data.values)
             data = self.scaler.transform(df_data.values)
         else:

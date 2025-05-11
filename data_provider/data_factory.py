@@ -68,6 +68,7 @@ def data_provider(args, flag):
             args = args,
             root_path=args.root_path,
             data_path=args.data_path,
+            test_data_path=args.test_data_path,
             flag=flag,
             size=[args.seq_len, args.label_len, args.pred_len],
             features=args.features,

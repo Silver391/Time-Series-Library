@@ -3,8 +3,9 @@ model_name=TimesNet
 python -u run.py \
   --task_name long_term_forecast \
   --is_training 1 \
-  --root_path /root/autodl-tmp/ \
-  --data_path 20240226_tmp.csv \
+  --root_path /home/lenovo/yinzhou/dataset \
+  --data_path 20250227_20250327.csv \
+  --test_data_path 20250328_20250328.csv \
   --model_id custom_timesnet \
   --model $model_name \
   --data custom \
