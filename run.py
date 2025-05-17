@@ -174,6 +174,7 @@ if __name__ == '__main__':
     else:
         Exp = Exp_Long_Term_Forecast
 
+    print(args.is_training)
     if args.is_training:
         for ii in range(args.itr):
             # setting record of experiments

@@ -137,7 +137,6 @@ class Model(nn.Module):
                            torch.sum(mask == 1, dim=1) + 1e-5)
         stdev = stdev.unsqueeze(1).detach()
         x_enc /= stdev
-
         # embedding
         enc_out = self.enc_embedding(x_enc, x_mark_enc)  # [B,T,C]
         # TimesNet

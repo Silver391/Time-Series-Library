@@ -284,9 +284,9 @@ class Dataset_Custom(Dataset):
                     train_data = train_df[[self.target]]
                 train_data = train_data[0:int(len(train_data) * 0.9)]
             self.scaler.fit(train_data.values)
-            data = self.scaler.transform(df_data.values)
+            data = self.scaler.transform(df_data.values).astype(np.float32)  # 新增类型转换
         else:
-            data = df_data.values
+            data = df_data.values.astype(np.float32)  # 新增类型转换
 
         df_stamp = df_raw[['date']][border1:border2]
         df_stamp['date'] = pd.to_datetime(df_stamp.date)
@@ -313,13 +313,13 @@ class Dataset_Custom(Dataset):
         s_end = s_begin + self.seq_len
         r_begin = s_end - self.label_len
         r_end = r_begin + self.label_len + self.pred_len
-
-        seq_x = self.data_x[s_begin:s_end]
-        seq_y = self.data_y[r_begin:r_end]
+        seq_x = self.data_x[s_begin:s_end, :-1] #去除label 
+        seq_y = self.data_y[r_begin:r_end, :-1] #去除label
+        label = self.data_y[r_begin:r_end]
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
 
-        return seq_x, seq_y, seq_x_mark, seq_y_mark
+        return seq_x, seq_y, seq_x_mark, seq_y_mark, label
 
     def __len__(self):
         return len(self.data_x) - self.seq_len - self.pred_len + 1
