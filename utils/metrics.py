@@ -1,4 +1,6 @@
 import numpy as np
+from sklearn.metrics import r2_score
+from scipy.stats import pearsonr
 
 
 def RSE(pred, true):
@@ -37,5 +39,8 @@ def metric(pred, true):
     rmse = RMSE(pred, true)
     mape = MAPE(pred, true)
     mspe = MSPE(pred, true)
+    # 新增计算 r2 和 corr（与 tmp.py 逻辑一致）
+    r2 = r2_score(true.reshape(-1), pred.reshape(-1))
+    corr, _ = pearsonr(true.reshape(-1), pred.reshape(-1))  # 取相关系数（忽略 p 值）
 
-    return mae, mse, rmse, mape, mspe
+    return mae, mse, rmse, mape, mspe, r2, corr
